@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>💸 Personal Finance Tracker</h1>
+
+        <div class="summary">
+            <p><strong>Total Income:</strong> ${{ income }}</p>
+            <p><strong>Total Expenses:</strong> ${{ expenses }}</p>
+            <p><strong>Balance:</strong> ${{ balance }}</p>
+        </div>
+
+        <form action="/add" method="POST">
+            <select name="type">
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+            </select>
+            <input type="text" name="category" placeholder="Category" required>
+            <input type="number" name="amount" placeholder="Amount" required>
+            <input type="date" name="date" required>
+            <button type="submit">Add Transaction</button>
+        </form>
+
+        <h2>📜 Transactions</h2>
+        <div class="transactions">
+            {% for transaction in transactions %}
+            <div class="transaction {{ transaction[1] }}">
+                <span>{{ transaction[1] }} | {{ transaction[2] }} | ${{ transaction[3] }} | {{ transaction[4] }}</span>
+                <a href="/delete/{{ transaction[0] }}" class="delete-btn">Delete</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h2>📊 Expense Insights</h2>
+        <div class="charts">
+            <canvas id="expensePieChart"></canvas>
+            <canvas id="expenseLineChart"></canvas>
+        </div>
+
+        <script>
+            // Fetch chart data
+            fetch('/chart-data')
+                .then(response => response.json())
+                .then(data => {
+                    // Render the pie chart
+                    const pieCtx = document.getElementById('expensePieChart').getContext('2d');
+                    new Chart(pieCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: data.categories,
+                            datasets: [{
+                                data: data.amounts,
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#FF9800'],
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' }
+                            }
+                        }
+                    });
+
+                    // Render the line chart
+                    const lineCtx = document.getElementById('expenseLineChart').getContext('2d');
+                    new Chart(lineCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.dates,
+                            datasets: [{
+                                label: 'Daily Expenses',
+                                data: data.daily_expenses,
+                                borderColor: '#FF6384',
+                                fill: false,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: { title: { display: true, text: 'Date' } },
+                                y: { title: { display: true, text: 'Amount' } }
+                            }
+                        }
+                    });
+                });
+        </script>
+    </div>
+</body>
+</html>
